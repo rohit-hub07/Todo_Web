@@ -2,9 +2,103 @@ const inputVal = document.getElementById("task-input");
 const addBtn = document.getElementById("add-btn");
 const ul = document.getElementById("ul-element");
 
-// Load tasks from localStorage
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 tasks.forEach(renderTask);
+
+
+const originalRenderTask = renderTask;
+renderTask = function(taskObj, idx) {
+  const task = document.createElement("li");
+  task.className = "todo-item";
+  if (taskObj.completed) task.classList.add("completed");
+
+  const textSpan = document.createElement("span");
+  textSpan.className = "todo-text";
+  textSpan.textContent = taskObj.text;
+
+  const actionsDiv = document.createElement("div");
+  actionsDiv.className = "todo-actions";
+
+
+  const completeBtn = document.createElement("button");
+  completeBtn.className = "todo-action-btn";
+  completeBtn.textContent = "✔️";
+  actionsDiv.appendChild(completeBtn);
+
+  const editbtn = document.createElement("button");
+  editbtn.className = "todo-action-btn";
+  editbtn.textContent = "✏️";
+  actionsDiv.appendChild(editbtn);
+
+  const del = document.createElement("button");
+  del.className = "todo-action-btn";
+  del.textContent = "🗑️";
+  actionsDiv.appendChild(del);
+
+  task.appendChild(textSpan);
+  task.appendChild(actionsDiv);
+  ul.appendChild(task);
+
+
+  completeBtn.addEventListener("click", function () {
+    task.classList.toggle("completed");
+    const index = Array.from(ul.children).indexOf(task);
+    tasks[index].completed = !tasks[index].completed;
+    saveTasks();
+  });
+
+  del.addEventListener("click", function () {
+    const index = Array.from(ul.children).indexOf(task);
+    tasks.splice(index, 1);
+    saveTasks();
+    ul.removeChild(task);
+  });
+
+  // Edit event
+  editbtn.addEventListener("click", function () {
+    if (task.querySelector(".edit-input")) return;
+
+    const editInput = document.createElement("input");
+    editInput.type = "text";
+    editInput.value = textSpan.textContent;
+    editInput.className = "todo-input edit-input";
+    editInput.style.marginRight = "8px";
+    editInput.style.flex = "1";
+
+    task.replaceChild(editInput, textSpan);
+    editInput.focus();
+
+    function saveEdit() {
+      const newValue = editInput.value.trim();
+      if (newValue) {
+        textSpan.textContent = newValue;
+        const index = Array.from(ul.children).indexOf(task);
+        tasks[index].text = newValue;
+        saveTasks();
+      }
+      task.replaceChild(textSpan, editInput);
+    }
+
+    editInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        saveEdit();
+      }
+      if (e.key === "Escape") {
+        task.replaceChild(textSpan, editInput);
+      }
+    });
+
+    editInput.addEventListener("blur", saveEdit);
+  });
+
+  // Mark as completed on text click (optional, can remove if only want button)
+  textSpan.addEventListener("click", function () {
+    task.classList.toggle("completed");
+    const index = Array.from(ul.children).indexOf(task);
+    tasks[index].completed = !tasks[index].completed;
+    saveTasks();
+  });
+};
 
 addBtn.addEventListener("click", function () {
   const val = inputVal.value.trim();
